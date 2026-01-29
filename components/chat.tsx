@@ -25,7 +25,7 @@ import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
-import { AlfredCallMode } from "./alfred-call-mode";
+import { MonalisaCallMode } from "./monalisa-call-mode";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
 import { Messages } from "./messages";
@@ -80,10 +80,10 @@ export function Chat({
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
 
-  // Voice mode state - quando ativo, Alfred fala as respostas
+  // Voice mode state - quando ativo, Monalisa fala as respostas
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [showAlfredMode, setShowAlfredMode] = useState(true); // Start with Alfred mode
+  const [showMonalisaMode, setShowMonalisaMode] = useState(true); // Start with Monalisa mode
   const lastSpokenMessageIdRef = useRef<string | null>(null);
 
   // Voice chat hook for TTS (used in non-call mode)
@@ -256,9 +256,9 @@ export function Chat({
 
   return (
     <>
-      {/* Alfred Mode - Full screen futuristic interface */}
-      {showAlfredMode && (
-        <AlfredCallMode
+      {/* Monalisa Mode - Full screen futuristic interface */}
+      {showMonalisaMode && (
+        <MonalisaCallMode
           isActive={callMode.isCallActive}
           isListening={callMode.isListening}
           isSpeaking={callMode.isSpeaking}
@@ -267,12 +267,12 @@ export function Chat({
           onEndCall={callMode.endCall}
           onMuteToggle={callMode.toggleMute}
           isMuted={callMode.isMuted}
-          onSwitchToChat={() => setShowAlfredMode(false)}
+          onSwitchToChat={() => setShowMonalisaMode(false)}
         />
       )}
 
       {/* Regular chat UI */}
-      {!showAlfredMode && (
+      {!showMonalisaMode && (
         <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
           <ChatHeader
             chatId={id}
@@ -318,11 +318,11 @@ export function Chat({
             )}
           </div>
 
-          {/* Button to switch to Alfred mode */}
+          {/* Button to switch to Monalisa mode */}
           <button
-            onClick={() => setShowAlfredMode(true)}
+            onClick={() => setShowMonalisaMode(true)}
             className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-cyan-700 text-white shadow-lg shadow-cyan-500/30 transition-all hover:scale-110 hover:shadow-cyan-500/50"
-            title="Modo Alfred"
+            title="Modo Monalisa"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

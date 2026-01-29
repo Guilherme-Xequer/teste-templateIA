@@ -37,9 +37,9 @@ export function useCallMode(options: UseCallModeOptions) {
       // Store the current transcript
       pendingMessageRef.current = text;
 
-      // If Alfred is speaking and user starts talking, interrupt Alfred
+      // If Monalisa is speaking and user starts talking, interrupt Monalisa
       if (isSpeakingRef.current && text.length > 0) {
-        console.log("[CallMode] User interrupted Alfred, stopping speech");
+        console.log("[CallMode] User interrupted Monalisa, stopping speech");
         wasInterruptedRef.current = true;
         stopSpeaking();
       }
@@ -96,24 +96,24 @@ export function useCallMode(options: UseCallModeOptions) {
     });
   }, [isCallActive, isSpeaking, startListening, stopListening]);
 
-  // Speak Alfred's response
+  // Speak Monalisa's response
   const speakResponse = useCallback((text: string) => {
     if (!isCallActive) return;
 
-    console.log("[CallMode] Alfred speaking:", text.substring(0, 50) + "...");
+    console.log("[CallMode] Monalisa speaking:", text.substring(0, 50) + "...");
     setIsProcessing(false);
     shouldListenAfterSpeakRef.current = true;
 
-    // Keep listening while Alfred speaks so user can interrupt
+    // Keep listening while Monalisa speaks so user can interrupt
     // Don't stop listening - this allows interruption detection
     speak(text);
   }, [isCallActive, speak]);
 
-  // Resume listening after Alfred finishes speaking (only if not already listening)
+  // Resume listening after Monalisa finishes speaking (only if not already listening)
   useEffect(() => {
     if (isCallActive && !isSpeaking && shouldListenAfterSpeakRef.current && !isMuted && !isListening) {
       shouldListenAfterSpeakRef.current = false;
-      console.log("[CallMode] Alfred finished speaking, resuming listening");
+      console.log("[CallMode] Monalisa finished speaking, resuming listening");
       setTimeout(() => {
         startListening();
       }, 300);

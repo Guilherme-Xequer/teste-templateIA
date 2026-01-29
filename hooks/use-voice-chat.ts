@@ -66,8 +66,8 @@ interface VoiceSettings {
   voiceName?: string;
 }
 
-// Alfred voice settings - natural speed
-const ALFRED_VOICE_SETTINGS: VoiceSettings = {
+// Monalisa voice settings - natural speed
+const MONALISA_VOICE_SETTINGS: VoiceSettings = {
   pitch: 1.0,      // Natural pitch
   rate: 0.95,      // Slightly slower for clarity
   volume: 1.0,
@@ -90,7 +90,7 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}) {
   const [isSupported, setIsSupported] = useState(false);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
-  const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>(ALFRED_VOICE_SETTINGS);
+  const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>(MONALISA_VOICE_SETTINGS);
 
   const recognitionRef = useRef<SpeechRecognitionInterface | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
@@ -256,9 +256,9 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}) {
         const voices = window.speechSynthesis.getVoices();
         setAvailableVoices(voices);
 
-        console.log("[Alfred] Available voices:", voices.map(v => `${v.name} (${v.lang})`));
+        console.log("[Monalisa] Available voices:", voices.map(v => `${v.name} (${v.lang})`));
 
-        // Try to find the most natural Portuguese Brazilian voice for Alfred
+        // Try to find the most natural Portuguese Brazilian voice for Monalisa
         // Microsoft "Online (Natural)" voices are the most human-like
         const preferredVoices = [
           // Microsoft Natural voices (most human-like) - Edge browser
@@ -284,7 +284,7 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}) {
             v.name.toLowerCase().includes(pv.toLowerCase())
           );
           if (selected) {
-            console.log("[Alfred] Found preferred voice:", selected.name);
+            console.log("[Monalisa] Found preferred voice:", selected.name);
             break;
           }
         }
@@ -318,7 +318,7 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}) {
           selected = voices[0];
         }
 
-        console.log("[Alfred] Selected voice:", selected?.name, selected?.lang);
+        console.log("[Monalisa] Selected voice:", selected?.name, selected?.lang);
         setSelectedVoice(selected || null);
       };
 
@@ -390,7 +390,7 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}) {
     }
   }, [isListening, startListening, stopListening]);
 
-  // Speak text with Alfred's natural voice
+  // Speak text with Monalisa's natural voice
   const speak = useCallback(
     (text: string) => {
       if (!synthRef.current || !voiceEnabled) return;
@@ -418,7 +418,7 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}) {
       };
 
       utterance.onerror = (event) => {
-        // "interrupted" and "canceled" are expected when user interrupts Alfred
+        // "interrupted" and "canceled" are expected when user interrupts Monalisa
         if (event.error !== "interrupted" && event.error !== "canceled") {
           console.error("Speech synthesis error:", event.error);
         }

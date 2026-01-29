@@ -3,19 +3,19 @@
 import { cn } from "@/lib/utils";
 import { memo, useEffect, useState } from "react";
 
-interface AlfredVisualizerProps {
+interface MonalisaVisualizerProps {
   isListening: boolean;
   isSpeaking: boolean;
   isProcessing?: boolean;
   className?: string;
 }
 
-function PureAlfredVisualizer({
+function PureMonalisaVisualizer({
   isListening,
   isSpeaking,
   isProcessing = false,
   className,
-}: AlfredVisualizerProps) {
+}: MonalisaVisualizerProps) {
   const [audioLevels, setAudioLevels] = useState<number[]>([0.3, 0.5, 0.7, 0.5, 0.3]);
 
   // Simulate audio visualization
@@ -62,7 +62,7 @@ function PureAlfredVisualizer({
   };
 
   const stateText = {
-    idle: "Pronto para ajudar",
+    idle: "Pronta para ajudar",
     listening: "Ouvindo...",
     speaking: "Respondendo...",
     processing: "Processando...",
@@ -82,7 +82,7 @@ function PureAlfredVisualizer({
         className
       )}
     >
-      {/* Main Alfred Container */}
+      {/* Main Monalisa Container */}
       <div
         className={cn(
           "relative flex flex-col items-center justify-center rounded-3xl border-2 bg-gradient-to-br p-8 transition-all duration-500",
@@ -125,15 +125,15 @@ function PureAlfredVisualizer({
           ))}
         </div>
 
-        {/* ALFRED Text */}
+        {/* MONALISA Text */}
         <h1
           className={cn(
-            "relative z-10 font-mono text-4xl font-bold tracking-[0.3em] text-white transition-all duration-300",
+            "relative z-10 font-mono text-3xl font-bold tracking-[0.2em] text-white transition-all duration-300",
             state === "listening" && "text-red-100",
             state === "speaking" && "text-blue-100 animate-pulse"
           )}
         >
-          ALFRED
+          MONALISA
         </h1>
 
         {/* Status Text */}
@@ -185,7 +185,7 @@ function PureAlfredVisualizer({
             : state === "listening"
             ? "Estou ouvindo você..."
             : state === "speaking"
-            ? "Alfred está respondendo..."
+            ? "Monalisa está respondendo..."
             : "Pensando..."}
         </span>
       </div>
@@ -193,4 +193,4 @@ function PureAlfredVisualizer({
   );
 }
 
-export const AlfredVisualizer = memo(PureAlfredVisualizer);
+export const MonalisaVisualizer = memo(PureMonalisaVisualizer);

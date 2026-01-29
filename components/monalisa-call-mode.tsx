@@ -5,7 +5,7 @@ import { MessageSquare, Mic, Volume2 } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { Button } from "./ui/button";
 
-interface AlfredCallModeProps {
+interface MonalisaCallModeProps {
   isActive: boolean;
   isListening: boolean;
   isSpeaking: boolean;
@@ -18,7 +18,7 @@ interface AlfredCallModeProps {
   className?: string;
 }
 
-function PureAlfredCallMode({
+function PureMonalisaCallMode({
   isActive,
   isListening,
   isSpeaking,
@@ -29,7 +29,7 @@ function PureAlfredCallMode({
   isMuted,
   onSwitchToChat,
   className,
-}: AlfredCallModeProps) {
+}: MonalisaCallModeProps) {
   const [audioLevels, setAudioLevels] = useState<number[]>(Array(24).fill(0.3));
   const [rotation, setRotation] = useState(0);
   const [pulseScale, setPulseScale] = useState(1);
@@ -276,9 +276,9 @@ function PureAlfredCallMode({
             state === "idle" && "border-cyan-500/50 shadow-[0_0_40px_rgba(6,182,212,0.2)]"
           )}
         >
-          {/* ALFRED Text */}
-          <h1 className="font-mono text-3xl font-bold tracking-[0.3em] text-cyan-400 mb-2">
-            ALFRED
+          {/* MONALISA Text */}
+          <h1 className="font-mono text-2xl font-bold tracking-[0.2em] text-cyan-400 mb-2">
+            MONALISA
           </h1>
 
           {/* Status Icon */}
@@ -355,13 +355,13 @@ function PureAlfredCallMode({
         <button
           onClick={onStartCall}
           className="absolute inset-0 cursor-pointer"
-          aria-label="Iniciar Alfred"
+          aria-label="Iniciar Monalisa"
         />
       ) : (
         <button
           onClick={isListening ? undefined : onStartCall}
           className="absolute inset-0 cursor-pointer"
-          aria-label="Falar com Alfred"
+          aria-label="Falar com Monalisa"
         />
       )}
 
@@ -400,4 +400,4 @@ function PureAlfredCallMode({
   );
 }
 
-export const AlfredCallMode = memo(PureAlfredCallMode);
+export const MonalisaCallMode = memo(PureMonalisaCallMode);

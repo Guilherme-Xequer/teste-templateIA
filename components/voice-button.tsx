@@ -60,11 +60,11 @@ function PureVoiceButton({
         </div>
       )}
 
-      {/* Alfred speaking indicator */}
+      {/* Monalisa speaking indicator */}
       {isSpeaking && !isListening && (
         <div className="flex items-center gap-2 rounded-full bg-blue-500/10 border border-blue-500/30 px-3 py-1.5">
           <Volume2 className="size-4 text-blue-500 animate-pulse" />
-          <span className="text-sm font-medium text-blue-500">Alfred falando...</span>
+          <span className="text-sm font-medium text-blue-500">Monalisa falando...</span>
           <Button
             type="button"
             variant="ghost"
@@ -138,7 +138,7 @@ function PureVoiceButton({
 
 export const VoiceButton = memo(PureVoiceButton);
 
-// Voice indicator component to show when Alfred is speaking
+// Voice indicator component to show when Monalisa is speaking
 interface VoiceIndicatorProps {
   isSpeaking: boolean;
   className?: string;
@@ -155,7 +155,7 @@ export function VoiceIndicator({ isSpeaking, className }: VoiceIndicatorProps) {
       )}
     >
       <Volume2 className="size-4 animate-pulse" />
-      <span>Alfred está falando...</span>
+      <span>Monalisa está falando...</span>
     </div>
   );
 }
