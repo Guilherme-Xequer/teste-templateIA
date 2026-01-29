@@ -3,10 +3,11 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
+import { useVoiceChat } from "@/hooks/use-voice-chat";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,7 @@ import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { AlfredCallMode } from "./alfred-call-mode";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
 import { Messages } from "./messages";
@@ -31,6 +33,7 @@ import { MultimodalInput } from "./multimodal-input";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
 import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
+import { useCallMode } from "@/hooks/use-call-mode";
 
 export function Chat({
   id,
@@ -76,6 +79,30 @@ export function Chat({
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
+
+  // Voice mode state - quando ativo, Alfred fala as respostas
+  const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [showAlfredMode, setShowAlfredMode] = useState(true); // Start with Alfred mode
+  const lastSpokenMessageIdRef = useRef<string | null>(null);
+
+  // Voice chat hook for TTS (used in non-call mode)
+  const { speak, stopSpeaking, isSpeaking } = useVoiceChat({
+    language: "pt-BR",
+    voiceEnabled: voiceModeEnabled,
+  });
+
+  // Call mode - for continuous conversation
+  const callMode = useCallMode({
+    onSendMessage: (text) => {
+      window.history.pushState({}, "", `/chat/${id}`);
+      sendMessage({
+        role: "user",
+        parts: [{ type: "text", text }],
+      });
+    },
+    language: "pt-BR",
+  });
 
   const {
     messages,
@@ -185,48 +212,139 @@ export function Chat({
     setMessages,
   });
 
+  // Extract text from assistant message parts
+  const extractTextFromMessage = useCallback((message: ChatMessage): string => {
+    if (!message.parts) return "";
+
+    return message.parts
+      .filter((part): part is { type: "text"; text: string } =>
+        part.type === "text" && "text" in part
+      )
+      .map((part) => part.text)
+      .join(" ");
+  }, []);
+
+  // Speak assistant responses when voice mode is enabled OR in call mode
+  useEffect(() => {
+    const shouldSpeak = voiceModeEnabled || callMode.isCallActive;
+    if (!shouldSpeak || status !== "ready" || messages.length === 0) return;
+
+    const lastMessage = messages[messages.length - 1];
+
+    // Only speak assistant messages that haven't been spoken yet
+    if (
+      lastMessage?.role === "assistant" &&
+      lastMessage.id !== lastSpokenMessageIdRef.current
+    ) {
+      const text = extractTextFromMessage(lastMessage);
+      if (text) {
+        if (callMode.isCallActive) {
+          // Use call mode's speak function (which will resume listening after)
+          callMode.speakResponse(text);
+        } else {
+          speak(text);
+        }
+        lastSpokenMessageIdRef.current = lastMessage.id;
+      }
+    }
+  }, [messages, status, voiceModeEnabled, speak, extractTextFromMessage, callMode]);
+
+  // Toggle voice mode callback
+  const toggleVoiceMode = useCallback(() => {
+    setVoiceModeEnabled((prev) => !prev);
+  }, []);
+
   return (
     <>
-      <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
-        <ChatHeader
-          chatId={id}
-          isReadonly={isReadonly}
-          selectedVisibilityType={initialVisibilityType}
+      {/* Alfred Mode - Full screen futuristic interface */}
+      {showAlfredMode && (
+        <AlfredCallMode
+          isActive={callMode.isCallActive}
+          isListening={callMode.isListening}
+          isSpeaking={callMode.isSpeaking}
+          isProcessing={callMode.isProcessing || status === "submitted" || status === "streaming"}
+          onStartCall={callMode.startCall}
+          onEndCall={callMode.endCall}
+          onMuteToggle={callMode.toggleMute}
+          isMuted={callMode.isMuted}
+          onSwitchToChat={() => setShowAlfredMode(false)}
         />
+      )}
 
-        <Messages
-          addToolApprovalResponse={addToolApprovalResponse}
-          chatId={id}
-          isArtifactVisible={isArtifactVisible}
-          isReadonly={isReadonly}
-          messages={messages}
-          regenerate={regenerate}
-          selectedModelId={initialChatModel}
-          setMessages={setMessages}
-          status={status}
-          votes={votes}
-        />
+      {/* Regular chat UI */}
+      {!showAlfredMode && (
+        <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
+          <ChatHeader
+            chatId={id}
+            isReadonly={isReadonly}
+            selectedVisibilityType={initialVisibilityType}
+          />
 
-        <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
-          {!isReadonly && (
-            <MultimodalInput
-              attachments={attachments}
-              chatId={id}
-              input={input}
-              messages={messages}
-              onModelChange={setCurrentModelId}
-              selectedModelId={currentModelId}
-              selectedVisibilityType={visibilityType}
-              sendMessage={sendMessage}
-              setAttachments={setAttachments}
-              setInput={setInput}
-              setMessages={setMessages}
-              status={status}
-              stop={stop}
-            />
-          )}
+          <Messages
+            addToolApprovalResponse={addToolApprovalResponse}
+            chatId={id}
+            isArtifactVisible={isArtifactVisible}
+            isReadonly={isReadonly}
+            messages={messages}
+            regenerate={regenerate}
+            selectedModelId={initialChatModel}
+            setMessages={setMessages}
+            status={status}
+            votes={votes}
+          />
+
+          <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
+            {!isReadonly && (
+              <MultimodalInput
+                attachments={attachments}
+                chatId={id}
+                input={input}
+                messages={messages}
+                onModelChange={setCurrentModelId}
+                selectedModelId={currentModelId}
+                selectedVisibilityType={visibilityType}
+                sendMessage={sendMessage}
+                setAttachments={setAttachments}
+                setInput={setInput}
+                setMessages={setMessages}
+                status={status}
+                stop={stop}
+                voiceModeEnabled={voiceModeEnabled}
+                onToggleVoiceMode={toggleVoiceMode}
+                isSpeaking={isSpeaking}
+                onStopSpeaking={stopSpeaking}
+                onListeningChange={setIsListening}
+              />
+            )}
+          </div>
+
+          {/* Button to switch to Alfred mode */}
+          <button
+            onClick={() => setShowAlfredMode(true)}
+            className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-cyan-700 text-white shadow-lg shadow-cyan-500/30 transition-all hover:scale-110 hover:shadow-cyan-500/50"
+            title="Modo Alfred"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="4" />
+              <line x1="12" y1="2" x2="12" y2="4" />
+              <line x1="12" y1="20" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="4" y2="12" />
+              <line x1="20" y1="12" x2="22" y2="12" />
+            </svg>
+          </button>
         </div>
-      </div>
+      )}
 
       <Artifact
         addToolApprovalResponse={addToolApprovalResponse}

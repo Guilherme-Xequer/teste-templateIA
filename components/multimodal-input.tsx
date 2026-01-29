@@ -16,6 +16,8 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
+import { useVoiceChat } from "@/hooks/use-voice-chat";
+import { VoiceButton } from "./voice-button";
 import {
   ModelSelector,
   ModelSelectorContent,
@@ -68,6 +70,11 @@ function PureMultimodalInput({
   selectedVisibilityType,
   selectedModelId,
   onModelChange,
+  voiceModeEnabled,
+  onToggleVoiceMode,
+  isSpeaking: isSpeakingFromParent,
+  onStopSpeaking,
+  onListeningChange,
 }: {
   chatId: string;
   input: string;
@@ -83,9 +90,53 @@ function PureMultimodalInput({
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
+  voiceModeEnabled?: boolean;
+  onToggleVoiceMode?: () => void;
+  isSpeaking?: boolean;
+  onStopSpeaking?: () => void;
+  onListeningChange?: (isListening: boolean) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+
+  // Voice chat hook for STT (speech-to-text) only
+  const {
+    isListening,
+    isSupported: isVoiceSupported,
+    toggleListening,
+    stopListening,
+  } = useVoiceChat({
+    language: "pt-BR",
+    voiceEnabled: false, // TTS is handled by parent
+    autoSendDelay: 1500, // Wait 1.5s of silence before auto-sending
+    onTranscript: (text) => {
+      // Show what user is saying in real-time
+      setInput(text);
+    },
+    onFinalTranscript: (text) => {
+      // Auto-send message when user stops speaking
+      if (text.trim() && status === "ready") {
+        console.log("[Voice] Auto-sending message:", text);
+        window.history.pushState({}, "", `/chat/${chatId}`);
+        sendMessage({
+          role: "user",
+          parts: [{ type: "text", text: text.trim() }],
+        });
+        setInput("");
+        setLocalStorageInput("");
+        // Stop listening is handled inside the hook now
+      }
+    },
+  });
+
+  // Use speaking state from parent if provided
+  const isSpeaking = isSpeakingFromParent ?? false;
+  const stopSpeaking = onStopSpeaking ?? (() => {});
+
+  // Notify parent when listening state changes
+  useEffect(() => {
+    onListeningChange?.(isListening);
+  }, [isListening, onListeningChange]);
 
   const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
@@ -388,6 +439,24 @@ function PureMultimodalInput({
               onModelChange={onModelChange}
               selectedModelId={selectedModelId}
             />
+            <VoiceButton
+              isListening={isListening}
+              isSpeaking={isSpeaking}
+              isSupported={isVoiceSupported}
+              disabled={status !== "ready"}
+              onToggleListening={toggleListening}
+              onStopSpeaking={stopSpeaking}
+              onSendMessage={() => {
+                if (input.trim()) {
+                  // Stop listening before sending to clear transcript
+                  stopListening();
+                  submitForm();
+                }
+              }}
+              hasText={!!input.trim()}
+              voiceModeEnabled={voiceModeEnabled}
+              onToggleVoiceMode={onToggleVoiceMode}
+            />
           </PromptInputTools>
 
           {status === "submitted" ? (
@@ -424,6 +493,12 @@ export const MultimodalInput = memo(
       return false;
     }
     if (prevProps.selectedModelId !== nextProps.selectedModelId) {
+      return false;
+    }
+    if (prevProps.voiceModeEnabled !== nextProps.voiceModeEnabled) {
+      return false;
+    }
+    if (prevProps.isSpeaking !== nextProps.isSpeaking) {
       return false;
     }
 
