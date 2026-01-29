@@ -123,9 +123,12 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}) {
     if (typeof window === "undefined") return;
 
     // Check for Speech Recognition support
+    const windowWithSpeech = window as unknown as {
+      SpeechRecognition?: SpeechRecognitionConstructor;
+      webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    };
     const SpeechRecognitionCtor = (
-      (window as Window & { SpeechRecognition?: SpeechRecognitionConstructor; webkitSpeechRecognition?: SpeechRecognitionConstructor }).SpeechRecognition ||
-      (window as Window & { webkitSpeechRecognition?: SpeechRecognitionConstructor }).webkitSpeechRecognition
+      windowWithSpeech.SpeechRecognition || windowWithSpeech.webkitSpeechRecognition
     ) as SpeechRecognitionConstructor | undefined;
 
     console.log("[VoiceChat] SpeechRecognition available:", !!SpeechRecognitionCtor);
