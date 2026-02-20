@@ -17,6 +17,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // API pública para o app do relógio (ClockAI)
+  if (pathname.startsWith("/api/clock")) {
+    return NextResponse.next();
+  }
+
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
