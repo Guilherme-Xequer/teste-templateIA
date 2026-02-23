@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // API pública para o app do relógio (ClockAI)
+  // API pública para o app do relógio (ClockAI) - sem autenticação
   if (pathname.startsWith("/api/clock")) {
     return NextResponse.next();
   }
