@@ -49,16 +49,21 @@ export const config = {
   matcher: [
     "/",
     "/chat/:id",
-    "/api/:path*",
     "/login",
     "/register",
+
+    /*
+     * Match API routes except /api/clock (public API for watch app)
+     */
+    "/api/((?!clock).*)",
 
     /*
      * Match all request paths except for the ones starting with:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - api/clock (public API for watch app)
      */
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|api/clock).*)",
   ],
 };
