@@ -1,5 +1,5 @@
 import { gateway } from "@ai-sdk/gateway";
-import { streamText } from "ai";
+import { generateText } from "ai";
 
 // Configuração CORS para permitir requisições do relógio
 const corsHeaders = {
@@ -41,16 +41,17 @@ Suas respostas devem ser:
 
 Se for uma pergunta complexa, dê a resposta resumida primeiro, depois explique brevemente.`;
 
-    const result = streamText({
+    const result = await generateText({
       model: gateway.languageModel(model),
       system: systemPrompt,
       messages: [{ role: "user", content: message }],
       maxTokens: 500, // Respostas curtas para o relógio
     });
 
-    // Retorna streaming para respostas mais rápidas
-    return result.toDataStreamResponse({
-      headers: corsHeaders,
+    // Retorna resposta em texto simples
+    return new Response(result.text, {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
     });
   } catch (error) {
     console.error("Erro na API Clock:", error);

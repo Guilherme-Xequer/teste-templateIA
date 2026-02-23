@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(tree:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nRenomear Alfred para Monalisa - nova assistente virtual\n\n- Renomeado alfred-call-mode.tsx para monalisa-call-mode.tsx\n- Renomeado alfred-visualizer.tsx para monalisa-visualizer.tsx\n- Atualizado prompts.ts com personalidade feminina da Monalisa\n- Atualizado todos os componentes e hooks com novo nome\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(vercel inspect:*)",
+      "Bash(vercel --prod)"
     ]
   }
 }
